@@ -54,7 +54,7 @@ function previewFile() {
 		const hit = hitText.test(text);
 		const miss = missText.test(text);
 
-		const isRiposte = text !== undefined && text.indexOf('(Riposte)') !== -1;
+		const isRiposte = text !== undefined && text.indexOf('(Riposte') !== -1;
 		const isCrit = text !== undefined && text.indexOf('(Critical)') !== -1;
 
 		if( (hit || miss) && !isRiposte) {
@@ -66,13 +66,14 @@ function previewFile() {
 			previousTS = timestamp;
 			if(hit) hits++;
 			if(miss) misses++;
+			
+			if(isCrit) {
+				crits++;
+			}
 		}
 
 		if(isRiposte) {
 			youWereRiposted++;
-		}
-		if(isCrit) {
-			crits++;
 		}
 
 		content.append(line + "<br/>");
