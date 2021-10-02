@@ -1,0 +1,102 @@
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+
+<body>
+Make sure your attack rate is slower than 1 second, or the double-attack calculation will not be accurate.<br/>
+Select log file: 
+<input type="file" onchange="previewFile()">
+
+<p id="results"></p>
+
+<hr/>
+<p id="content"></p>
+
+</body>
+
+<script>
+
+function previewFile() {
+  const content = $("#content");
+  const results = $("#results");
+  content.html("");
+  results.html("Reading file");
+
+  const [file] = document.querySelector('input[type=file]').files;
+  const reader = new FileReader();
+
+  reader.addEventListener("load", () => {
+
+	let data = reader.result;
+        let lines = data.split("\n");
+	results.html("Total lines: " + lines.length);
+
+	let hitText = new RegExp(' You (slash|pierce|crush)');
+	let missText = new RegExp(' You try to (slash|pierce|crush)');
+
+	let totalAttacks = 0;
+	let doubleAttacks = 0;
+	let misses = 0;
+	let hits = 0;
+	let crits = 0;
+	let youWereRiposted = 0;
+
+ 	let previousTS = 'x'; //Just something to not match the first line
+	
+
+	$.each(lines, function(index, line) {
+		let split = line.split("]");
+		let timestamp = split[0];
+		let text = split[1];
+		timestamp = timestamp.substring(1);
+
+		const hit = hitText.test(text);
+		const miss = missText.test(text);
+
+		const isRiposte = text !== undefined && text.indexOf('(Riposte)') !== -1;
+		const isCrit = text !== undefined && text.indexOf('(Critical)') !== -1;
+
+		if( (hit || miss) && !isRiposte) {
+			console.log(text + " is an attack");
+			totalAttacks++;
+			if(timestamp === previousTS) {
+				doubleAttacks++;
+			}
+			previousTS = timestamp;
+			if(hit) hits++;
+			if(miss) misses++;
+		}
+
+		if(isRiposte) {
+			youWereRiposted++;
+		}
+		if(isCrit) {
+			crits++;
+		}
+
+		content.append(line + "<br/>");
+
+	});
+
+	results.append("<br/>");
+	results.append("<br/><strong>Total Attacks:</strong> " + totalAttacks);
+	results.append("<br/><strong>Double Attacks:</strong> " + doubleAttacks);
+	if(totalAttacks > 0) {
+		results.append("<br/><strong>Double Attack Rate:</strong> " + (doubleAttacks/totalAttacks));
+	}
+	results.append("<br/>");
+	results.append("<br/><strong>Hits:</strong> " + hits);
+	results.append("<br/><strong>Misses:</strong> " + misses);
+	results.append("<br/><strong>Accuracy:</strong> " + (hits/totalAttacks));
+	results.append("<br/>");
+	results.append("<br/><strong>Crits:</strong> " + crits);
+	results.append("<br/><strong>Crit Rate:</strong> " + (crits/totalAttacks));
+  }, false);
+
+  if (file) {
+    reader.readAsText(file);
+  }
+}
+</script>
+</html>
